@@ -12,26 +12,50 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
+            background-image: url('https://images.unsplash.com/photo-1549429532-603120614532?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            background-color: #0f172a; /* Fallback color */
         }
         #timer-display {
             font-variant-numeric: tabular-nums;
         }
+        /* Hide number input spinners */
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
     </style>
 </head>
-<body class="bg-slate-900 text-white flex items-center justify-center min-h-screen p-4">
+<body class="text-white flex items-center justify-center min-h-screen p-4">
 
-    <div class="bg-slate-800 p-8 rounded-xl shadow-lg w-full max-w-sm flex flex-col items-center space-y-6">
+    <div class="bg-slate-800 bg-opacity-90 p-8 rounded-xl shadow-lg w-full max-w-lg flex flex-col items-center space-y-6">
         <h1 class="text-3xl font-bold text-slate-100">Timer</h1>
 
-        <!-- Time input section -->
-        <div class="flex flex-col items-center space-y-2 w-full">
-            <label for="time-input" class="text-slate-400">Set Timer (minutes):</label>
-            <input type="number" id="time-input" value="25" min="1" class="w-full text-center bg-slate-700 text-white text-2xl font-semibold rounded-lg p-3 outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-200">
+        <!-- Time input section with hours, minutes, and seconds -->
+        <div class="flex justify-center items-end space-x-4 w-full">
+            <div class="flex flex-col items-center">
+                <label for="hours-input" class="text-slate-400 text-sm">Hours</label>
+                <input type="number" id="hours-input" value="0" min="0" max="99" class="w-16 text-center bg-slate-700 text-white text-2xl font-semibold rounded-lg p-3 outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-200">
+            </div>
+            <div class="flex flex-col items-center">
+                <label for="minutes-input" class="text-slate-400 text-sm">Minutes</label>
+                <input type="number" id="minutes-input" value="25" min="0" max="59" class="w-16 text-center bg-slate-700 text-white text-2xl font-semibold rounded-lg p-3 outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-200">
+            </div>
+            <div class="flex flex-col items-center">
+                <label for="seconds-input" class="text-slate-400 text-sm">Seconds</label>
+                <input type="number" id="seconds-input" value="0" min="0" max="59" class="w-16 text-center bg-slate-700 text-white text-2xl font-semibold rounded-lg p-3 outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-200">
+            </div>
         </div>
 
         <!-- Timer display -->
-        <div id="timer-display" class="text-7xl md:text-8xl font-extrabold text-slate-200 transition-colors duration-500">
-            00:00
+        <div id="timer-display" class="text-6xl md:text-7xl font-extrabold text-slate-200 transition-colors duration-500">
+            00:00:00
         </div>
 
         <!-- Control buttons -->
@@ -49,12 +73,13 @@
 
         <!-- Message box for alerts -->
         <div id="message-box" class="mt-4 p-3 bg-indigo-900 text-white text-center rounded-lg w-full hidden"></div>
-
     </div>
 
     <script>
         // DOM elements
-        const timeInput = document.getElementById('time-input');
+        const hoursInput = document.getElementById('hours-input');
+        const minutesInput = document.getElementById('minutes-input');
+        const secondsInput = document.getElementById('seconds-input');
         const timerDisplay = document.getElementById('timer-display');
         const startBtn = document.getElementById('start-btn');
         const pauseBtn = document.getElementById('pause-btn');
@@ -69,9 +94,11 @@
 
         // Function to update the timer display
         function updateDisplay() {
-            const minutes = Math.floor(secondsRemaining / 60);
+            const hours = Math.floor(secondsRemaining / 3600);
+            const minutes = Math.floor((secondsRemaining % 3600) / 60);
             const seconds = secondsRemaining % 60;
-            timerDisplay.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+            timerDisplay.textContent = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 
             // Change color to red in the last 20 seconds
             if (secondsRemaining <= 20 && secondsRemaining > 0) {
@@ -105,13 +132,17 @@
             hideMessage();
 
             if (!isPaused) {
-                const minutes = parseInt(timeInput.value, 10);
-                if (isNaN(minutes) || minutes <= 0) {
-                    showMessage("Please enter a valid time.", 'error');
+                const hours = parseInt(hoursInput.value, 10) || 0;
+                const minutes = parseInt(minutesInput.value, 10) || 0;
+                const seconds = parseInt(secondsInput.value, 10) || 0;
+
+                totalSeconds = (hours * 3600) + (minutes * 60) + seconds;
+                secondsRemaining = totalSeconds;
+
+                if (totalSeconds <= 0) {
+                    showMessage("Please enter a valid time greater than 0.", 'error');
                     return;
                 }
-                totalSeconds = minutes * 60;
-                secondsRemaining = totalSeconds;
             }
 
             if (secondsRemaining > 0) {
@@ -125,7 +156,7 @@
                     updateDisplay();
                     if (secondsRemaining <= 0) {
                         clearInterval(timerId);
-                        timerDisplay.textContent = '00:00';
+                        timerDisplay.textContent = '00:00:00';
                         showMessage("Time's up!");
                         startBtn.disabled = false;
                         pauseBtn.disabled = true;
@@ -162,3 +193,4 @@
     </script>
 </body>
 </html>
+
